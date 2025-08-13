@@ -1,0 +1,48 @@
+<!--
+データベースに接続する
+セレクト文でデータを取得
+データベース切断
+-->
+<?php
+  $groups = [];
+
+  $mysqli = new mysqli('db', 'test_user', 'pass', 'test_database');
+  $result = $mysqli->query('SELECT name FROM employees');
+  $employees = $result->fetch_all(MYSQLI_ASSOC);
+  $employees = array_column($employees, 'name');
+  shuffle($employees);
+  $numberOfRegistrations = count($employees);
+
+  if($numberOfRegistrations % 2 === 0){
+    $groups = array_chunk($employees, 2);
+  } else {
+    $extra = array_pop($employees);
+    $groups = array_chunk($employees, 2);
+    array_push($groups[0], $extra);
+  }
+  $mysqli->close();
+?>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>シャッフルランチサービス</title>
+</head>
+<body>
+
+<h1><a href='/'>シャッフルランチサービス</a></h1>
+
+<p><a href='register.php'>社員を登録する</a></p>
+
+<P><?php var_export($groups) ;?></p>
+<?php foreach ($groups as $group) :?>
+  <li>
+      <?php foreach ($group as $employee) :?>
+        <?php echo $employee ;?>
+      <?php endforeach ;?>
+  </li>
+<?php endforeach ;?>
+
+</body>
+</html>
