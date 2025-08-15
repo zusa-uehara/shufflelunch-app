@@ -1,64 +1,82 @@
 <?php
-require __DIR__ . '/controller/ShuffleController.php';
-require __DIR__ . '/core/HttpNotFoundException.php';
 
   class Application{
 
-    function run(){
+    protected $router;
+    protected $request;
+    protected $response;
+    protected $databaseManager;
+
+    public function __construct(){
+
+      $this->router = new Router($this->registerRoutes());
+      $this->request = new Request();
+      $this->response = new Response();
+      $this->databaseManager = new DatabaseManager();
+      $this->databaseManager->connect(
+        [
+          'hostname' => 'db',
+          'username' => 'test_user',
+          'password' => 'pass',
+          'database' => 'test_database',
+        ]
+      );
+    }
+
+    public function run(){
 
       try{
-      $pathInfo = $this->getPath();
-      $routes = $this->registerRoutes();
-      $params = $this->resolve($pathInfo, $routes);
-      if(!$params){
-        throw new HttpNotFoundException();
-      }
+        $params = $this->router->resolve($this->request->getPathInfo());
+        if(!$params){
+          throw new HttpNotFoundException();
+        }
 
-      $controller = $params['controller'];
-      $action = $params['action'];
-      $this->runAction($controller, $action);
+        $controller = $params['controller'];
+        $action = $params['action'];
+        $this->runAction($controller, $action);
       } catch(HttpNotFoundException) {
         $this->render404page();
       }
+        $this->response->send();
 
     }
 
-    function registerRoutes(){
+    public function getRequest(){
+      return $this->request;
+    }
+
+    public function getDatabaseManager(){
+      return $this->databaseManager;
+    }
+
+    function runAction($controllerName, $action){
+
+      $controllerClass = ucfirst($controllerName) . 'Controller';
+      if(!class_exists($controllerClass)){
+        throw new HttpNotFoundException();
+      }
+      $controller = new $controllerClass($this);
+      $content = $controller->runControllerAction($action);
+
+      $this->response->setContent($content);
+  }
+
+    public function registerRoutes(){
       $routes = [
         '/' => ['controller' => 'shuffle', 'action' =>'index'],
         '/shuffle' => ['controller' => 'shuffle', 'action' =>'create'],
+        '/employee' => ['controller' => 'employee', 'action' =>'index'],
+        '/employee/create' => ['controller' => 'employee', 'action' =>'create'],
+        '/edit' => ['controller' => 'edit', 'action' =>'index'],
+        '/edit/create' => ['controller' => 'edit', 'action' =>'create'],
       ];
       return $routes;
     }
 
-    function getPath(){
-      return $_SERVER['REQUEST_URI'];
-    }
-
-    function resolve($pathInfo, $routes){
-      foreach($routes as $path => $routePattern){
-        if($path === $pathInfo){
-          return $routePattern;
-        }
-      }
-      return false;
-    }
-
-    function runAction($controller, $action){
-
-      $controllerName = ucfirst($controller) . 'Controller';
-      $actionName = $action;
-      if(!class_exists($controllerName)){
-        throw new HttpNotFoundException();
-      }
-      $controller = new $controllerName();
-      $controller->$actionName();
-
-  }
-
-  function render404page(){
-    header("HTTP/1.1 404 Not Found");
-echo <<<EOF
+    function render404page(){
+      $this->response->setStatusCode('404', 'Not Found');
+      $this->response->setContent(
+<<<EOF
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -72,6 +90,7 @@ echo <<<EOF
 
 </body>
 </html>
-EOF;
-  }
+EOF
+      );
+    }
 }
