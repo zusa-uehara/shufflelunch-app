@@ -78,6 +78,8 @@ composer phpcs
 
 
 ## ディレクトリ構成
+
+```
 application.php
 bootstrap.php
 
@@ -110,7 +112,7 @@ web
 ├── index.php
 └── .htaccess
 
-
+```
 
 ## 機能一覧
 | フェーズ     | 機能                    |
