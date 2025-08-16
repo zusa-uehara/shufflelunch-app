@@ -58,6 +58,8 @@ composer phpstan
 ## PHP_CodeSniffer でコーディング規約に準拠していないコードを検知する
 composer phpcs
 
+```
+
 # Shuffle Lunch Service – MVC構造のPHP自作Webアプリ
 
 このアプリは、独学エンジニアという学習サイトの課題として作成した
